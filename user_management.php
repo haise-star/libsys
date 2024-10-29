@@ -316,7 +316,7 @@ $totalPages = ceil($total / $limit);
 
             <div class="nav-links">
                 <a href="admin_dashboard.php"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
-                <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                
             </div>
         </div>
 

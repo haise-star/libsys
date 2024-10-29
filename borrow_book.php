@@ -139,14 +139,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['borrow_book'])) {
     <script>
         function selectBook(bookTitle, bookAuthor, bookId, availableCopies, bookGenre) {
             document.getElementById('main-book-title').textContent = bookTitle;
-            document.getElementById('main-book-author').innerHTML = `<span>👤</span> ${bookAuthor}`;
-            document.getElementById('main-book-genre').innerHTML = `<span>📖</span> ${bookGenre}`;
-            document.getElementById('main-book-id').innerHTML = `<span>🆔</span> ${bookId}`;
-            document.getElementById('main-book-copies').innerHTML = `<span>📚</span> ${availableCopies}`;
+            document.getElementById('main-book-author').innerHTML = `<span>👤</span> Author: ${bookAuthor}`;
+            document.getElementById('main-book-genre').innerHTML = `<span>📖</span> Genre: ${bookGenre}`;
+            document.getElementById('main-book-id').innerHTML = `<span>🆔</span> ID: ${bookId}`;
+            document.getElementById('main-book-copies').innerHTML = `<span>📚</span> Available Copies: ${availableCopies}`;
             document.getElementById('modal-book-id').value = bookId;
             const borrowBtn = document.getElementById('borrow-btn');
             borrowBtn.style.display = 'block';
             borrowBtn.disabled = availableCopies <= 0;
+        }
+
+        function filterBooks() {
+            const searchQuery = document.getElementById('bookSearch').value.toLowerCase();
+            const bookCards = document.querySelectorAll('.book-card');
+
+            bookCards.forEach(card => {
+                const title = card.querySelector('.book-title').textContent.toLowerCase();
+                const author = card.querySelector('.book-author').textContent.toLowerCase();
+                
+                if (title.includes(searchQuery) || author.includes(searchQuery)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
         }
     </script>
 </head>
@@ -186,10 +202,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['borrow_book'])) {
             <h2>Book Details</h2>
             <div id="main-book-details">
                 <div id="main-book-title">Select a book to see details</div>
-                <div id="main-book-author"><span>👤</span><span>Author:</span> Not selected</div>
-                <div id="main-book-genre"><span>📖</span><span>Genre:</span> Not selected</div>
-                <div id="main-book-id"><span>🆔</span><span>ID:</span> Not selected</div>
-                <div id="main-book-copies"><span>📚</span><span>Available Copies:</span> Not selected</div>
+                <div id="main-book-author"><span>👤</span> Author: Not selected</div>
+                <div id="main-book-genre"><span>📖</span> Genre: Not selected</div>
+                <div id="main-book-id"><span>🆔</span> ID: Not selected</div>
+                <div id="main-book-copies"><span>📚</span> Available Copies: Not selected</div>
                 <form method="POST" style="width: 100%;">
                     <input type="hidden" name="book_id" id="modal-book-id">
                     <button type="submit" name="borrow_book" id="borrow-btn" class="btn" style="display: none; width: 100%;">Borrow</button>
@@ -199,4 +215,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['borrow_book'])) {
     </div>
 </body>
 </html>
+
 

@@ -141,14 +141,24 @@ try {
             color: #555;
         }
 
-        /* Delete Button */
-        .delete-button {
-            color: #e74c3c;
+        /* Action Buttons */
+        .delete-button, .edit-button {
             text-decoration: none;
             font-weight: bold;
         }
+        .delete-button {
+            color: #e74c3c;
+        }
+        .edit-button {
+            color: #3498db;
+            margin-right: 10px;
+        }
         .delete-button:hover {
             color: #c0392b;
+            text-decoration: underline;
+        }
+        .edit-button:hover {
+            color: #2980b9;
             text-decoration: underline;
         }
 
@@ -201,7 +211,7 @@ try {
             echo "<td>" . htmlspecialchars($book['genre']) . "</td>";
             echo "<td>" . htmlspecialchars($book['published_year']) . "</td>";
             echo "<td>" . htmlspecialchars($book['supply_count']) . "</td>";
-            echo "<td><a href='delete_book.php?id=" . urlencode($book['id']) . "' onclick='return confirm(\"Are you sure you want to delete this book?\");' class='delete-button'>Delete</a></td>";
+            echo "<td><a href='update_books.php?id=" . urlencode($book['id']) . "' class='edit-button'>Edit</a><a href='delete_book.php?id=" . urlencode($book['id']) . "' onclick='return confirm(\"Are you sure you want to delete this book?\");' class='delete-button'>Delete</a></td>";
             echo "</tr>";
         }
         echo "</table>";
@@ -216,13 +226,14 @@ try {
         echo "<h3>All Users</h3>";
         echo "<div class='table-container'>";
         echo "<table>";
-        echo "<tr><th>User ID</th><th>Username</th><th>Email</th><th>Role</th></tr>";
+        echo "<tr><th>User ID</th><th>Username</th><th>Email</th><th>Role</th><th>Action</th></tr>";
         foreach ($users as $user) {
             echo "<tr>";
             echo "<td>" . htmlspecialchars($user['id']) . "</td>";
             echo "<td>" . htmlspecialchars($user['username']) . "</td>";
             echo "<td>" . htmlspecialchars($user['email']) . "</td>";
             echo "<td>" . htmlspecialchars($user['role']) . "</td>";
+            echo "<td><a href='edit_user.php?id=" . urlencode($user['id']) . "' class='edit-button'>Edit</a></td>";
             echo "</tr>";
         }
         echo "</table>";
