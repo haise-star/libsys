@@ -86,8 +86,7 @@
 
         <input type="submit" value="Login">
     </form>
-    <a href="register.php">Register here</a>
-
+   
     <script>
         function togglePassword() {
             const passwordInput = document.getElementById('password');

@@ -10,41 +10,41 @@ require 'config.php';
 $books = $borrowedBooks = $returnedBooks = [];
 $returnedBooksCount = 0;
 
-// Fetch all data in one go
 try {
     // Fetch all books
     $stmt = $conn->prepare("SELECT * FROM books");
     $stmt->execute();
     $books = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Fetch all borrowed books
+    // Fetch all borrowed books with details
     $stmt = $conn->prepare("SELECT borrowings.id AS borrowing_id, borrowings.borrow_date, borrowings.due_date, borrowings.status,
-                                    books.title AS book_title, users.username AS student_username 
-                             FROM borrowings 
-                             JOIN books ON borrowings.book_id = books.id 
-                             JOIN users ON borrowings.user_id = users.id");
+                            books.title AS book_title, users.username AS student_username 
+                            FROM borrowings 
+                            JOIN books ON borrowings.book_id = books.id 
+                            JOIN users ON borrowings.user_id = users.id");
     $stmt->execute();
     $borrowedBooks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Fetch count of returned books
-    $stmt = $conn->prepare("SELECT COUNT(*) FROM borrowings WHERE status = 'returned'");
+    // Fetch count of all returned books from return_books table based on status
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM return_books WHERE status = 'return'");
     $stmt->execute();
     $returnedBooksCount = $stmt->fetchColumn();
 
-    // Fetch details of returned books
-    $stmt = $conn->prepare("SELECT b.id, bo.title AS book_title, u.username AS student_username, b.returned_at 
-                            FROM borrowings b 
-                            JOIN books bo ON b.book_id = bo.id 
-                            JOIN users u ON b.user_id = u.id 
-                            WHERE b.returned_at IS NOT NULL 
-                            ORDER BY b.returned_at DESC");
+    // Fetch details of returned books from return_books table
+    $stmt = $conn->prepare("SELECT rb.id, bo.title AS book_title, u.username AS student_username, rb.return_date 
+                            FROM return_books rb 
+                            JOIN books bo ON rb.book_id = bo.id 
+                            JOIN users u ON rb.user_id = u.id 
+                            WHERE rb.status = 'return' 
+                            ORDER BY rb.return_date DESC");
     $stmt->execute();
     $returnedBooks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
-    echo "Database error: " . $e->getMessage();
+    echo "Database error: " . htmlspecialchars($e->getMessage());
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -179,9 +179,9 @@ try {
                 <p>Borrowed Books</p>
             </div>
             <div class="stat-box">
-                <h4><?php echo $returnedBooksCount; ?></h4>
-                <p>Returned Books</p>
-            </div>
+    <h4><?php echo htmlspecialchars($returnedBooksCount); ?></h4>
+    <p>Returned Books</p>
+</div>
         </div>
 
         <a href="edit_book.php" class="add-book-button">+ Add New Book</a>
@@ -250,30 +250,38 @@ try {
         </div>
 
         <div class="table-container">
-            <h2>Recently Returned Books</h2>
-            <?php if (count($returnedBooks) > 0): ?>
-                <div style="max-height: 400px; overflow-y: auto;">
-                    <table>
-                        <tr>
-                            <th>Return ID</th>
-                            <th>Book Title</th>
-                            <th>Returned By</th>
-                            <th>Return Date</th>
-                        </tr>
-                        <?php foreach ($returnedBooks as $returned): ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars($returned['id']); ?></td>
-                                <td><?php echo htmlspecialchars($returned['book_title']); ?></td>
-                                <td><?php echo htmlspecialchars($returned['student_username']); ?></td>
-                                <td><?php echo htmlspecialchars($returned['returned_at']); ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </table>
-                </div>
-            <?php else: ?>
-                <p>No returned books found.</p>
-            <?php endif; ?>
+    <h2>Recently Returned Books</h2>
+    <?php if (count($returnedBooks) > 0): ?>
+        <div style="max-height: 400px; overflow-y: auto;">
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Book Title</th>
+                    <th>Returned By</th>
+                    <th>Return Date</th>
+                    <th>Actions</th> <!-- New column for actions -->
+                </tr>
+                <?php foreach ($returnedBooks as $returned): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($returned['id']); ?></td>
+                        <td><?php echo htmlspecialchars($returned['book_title']); ?></td>
+                        <td><?php echo htmlspecialchars($returned['student_username']); ?></td>
+                        <td><?php echo htmlspecialchars($returned['return_date']); ?></td>
+                        <td>
+                            <!-- Action Links for Edit and Delete -->
+                            <a href="edit_returned_book.php?id=<?php echo htmlspecialchars($returned['id']); ?>">Edit</a> |
+                            <a href="delete_returned_book.php?id=<?php echo htmlspecialchars($returned['id']); ?>" 
+                               onclick="return confirm('Are you sure you want to delete this returned book record?');">Delete</a>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </table>
         </div>
+    <?php else: ?>
+        <p>No returned books found.</p>
+    <?php endif; ?>
+</div>
+
 
         <a class="logout" href='logout.php'>Logout</a>
     </div>

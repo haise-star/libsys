@@ -8,7 +8,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student') {
 require 'config.php';
 
 try {
-    $sql = "SELECT b.id, bo.title FROM borrowings b JOIN books bo ON b.book_id = bo.id WHERE b.user_id = :user_id AND b.returned_at IS NULL";
+    // Retrieve borrowed books that have not been returned
+    $sql = "SELECT b.id, bo.title, bo.id AS book_id FROM borrowings b JOIN books bo ON b.book_id = bo.id WHERE b.user_id = :user_id AND b.returned_at IS NULL";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
     $stmt->execute();
@@ -22,25 +23,37 @@ $successMessage = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['return_book'])) {
     $borrowingId = $_POST['borrowing_id'];
     try {
-        $sql = "UPDATE borrowings SET returned_at = NOW() WHERE id = :id";
-        $stmt = $conn->prepare($sql);
-        $stmt->bindParam(':id', $borrowingId, PDO::PARAM_INT);
+        // Fetch the book and user details
+        $sqlFetchDetails = "SELECT bo.title, bo.id AS book_id FROM books bo JOIN borrowings b ON b.book_id = bo.id WHERE b.id = :id";
+        $fetchStmt = $conn->prepare($sqlFetchDetails);
+        $fetchStmt->bindParam(':id', $borrowingId, PDO::PARAM_INT);
+        $fetchStmt->execute();
+        $book = $fetchStmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($stmt->execute()) {
-            $sqlFetchTitle = "SELECT bo.title FROM books bo JOIN borrowings b ON b.book_id = bo.id WHERE b.id = :id";
-            $fetchStmt = $conn->prepare($sqlFetchTitle);
-            $fetchStmt->bindParam(':id', $borrowingId, PDO::PARAM_INT);
-            $fetchStmt->execute();
-            $book = $fetchStmt->fetch(PDO::FETCH_ASSOC);
+        if ($book) {
+            // Insert the return record into the return_books table
+            $sqlInsertReturn = "INSERT INTO return_books (book_id, user_id, return_date) VALUES (:book_id, :user_id, NOW())";
+            $insertStmt = $conn->prepare($sqlInsertReturn);
+            $insertStmt->bindParam(':book_id', $book['book_id'], PDO::PARAM_INT);
+            $insertStmt->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
+            $insertStmt->execute();
 
-            $sqlUpdate = "UPDATE books SET supply_count = supply_count + 1 WHERE id = (SELECT book_id FROM borrowings WHERE id = :id)";
+            // Update the supply count in the books table
+            $sqlUpdate = "UPDATE books SET supply_count = supply_count + 1 WHERE id = :book_id";
             $updateStmt = $conn->prepare($sqlUpdate);
-            $updateStmt->bindParam(':id', $borrowingId, PDO::PARAM_INT);
+            $updateStmt->bindParam(':book_id', $book['book_id'], PDO::PARAM_INT);
             $updateStmt->execute();
 
+            // Delete the entry from the borrowings table
+            $sqlDeleteBorrowing = "DELETE FROM borrowings WHERE id = :id";
+            $deleteStmt = $conn->prepare($sqlDeleteBorrowing);
+            $deleteStmt->bindParam(':id', $borrowingId, PDO::PARAM_INT);
+            $deleteStmt->execute();
+
+            // Success message
             $successMessage = "You have successfully returned the book: <strong>" . htmlspecialchars($book['title']) . "</strong>.";
         } else {
-            echo "<p>Failed to return the book. Please try again.</p>";
+            echo "<p>Book not found.</p>";
         }
     } catch (PDOException $e) {
         echo "<p>Error: " . htmlspecialchars($e->getMessage()) . "</p>";
@@ -205,3 +218,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['return_book'])) {
     </div>
 </body>
 </html>
+
